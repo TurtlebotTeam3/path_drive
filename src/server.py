@@ -40,11 +40,12 @@ class PathDriveServer:
         success = True
         rate = rospy.Rate(1)
         self.waypoints = data.waypoints.fullpath
+
         print self.waypoints
         self.waypointsAvailable = True
 
         while not rospy.is_shutdown():
-            if self.is_navigating == False and self.waypoints != []:
+            if self.is_navigating == False:
                 self._navigate()
             if self.waypointsAvailable == False:
                 self.is_navigating = False
@@ -100,9 +101,12 @@ class PathDriveServer:
     
     
     def _goal_reached_callback(self, reached):
-        if reached:
+        print reached
+        if reached.data == True:
+            print "reached"
             self._navigate()
         else:
+            print "nope"
             self.waypoints = []
             self.result.result.reached_last_goal.data = False
             self.waypointsAvailable = False
