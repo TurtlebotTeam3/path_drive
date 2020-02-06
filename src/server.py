@@ -38,7 +38,7 @@ class PathDriveServer:
 
     def execute_callback(self, data):
         success = True
-        rate = rospy.Rate(1)
+        #ate = rospy.Rate(1)
         self.waypoints = data.waypoints.fullpath
 
         self.waypointsAvailable = True
@@ -56,7 +56,7 @@ class PathDriveServer:
             self.feedback.feedback.driving.data = self.is_navigating
 
             self._as.publish_feedback(self.feedback.feedback)
-            rate.sleep()
+            #rate.sleep()
  
         if success:
             self._as.set_succeeded(self.result.result)
