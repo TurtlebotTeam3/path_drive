@@ -12,7 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   message_generation
   std_msgs
-  actionlib
+  genmsg
   actionlib_msgs
 )
 
@@ -65,6 +65,7 @@ find_package(catkin REQUIRED COMPONENTS
 
 ## Generate actions in the 'action' folder
  add_action_files(
+   DIRECTORY action
    FILES
    PathDrive.action
  )

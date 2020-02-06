@@ -1,5 +1,5 @@
 FullPath waypoints 
 ---
-std_msgs/Bool driving
----
 std_msgs/Bool reached_last_goal
+---
+std_msgs/Bool driving

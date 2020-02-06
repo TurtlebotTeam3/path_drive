@@ -1,42 +1,50 @@
+#!/usr/bin/env python
 import rospy
-import actionlib
 import actionlib
 from std_msgs.msg import Bool
 from geometry_msgs.msg import Pose
-from path_drive.msg import PathPoint, FullPath
+from path_drive.msg import PathPoint, FullPath, PathDriveAction, PathDriveActionFeedback, PathDriveActionResult
 from nav_msgs.msg import OccupancyGrid
+
 
 class PathDriveServer:
 
     def __init__(self, name):
         self.is_navigating = False
-        self.waypoints = None
-        self.feedback = Bool()
-        self.result =  Bool()
+        self.waypoints = []
+        self.feedback = PathDriveActionFeedback()
+        self.result = PathDriveActionResult()
 
+        print("--- publisher ---")
+        # --- Publishers ---
         self.pub_goal = rospy.Publisher('/move_to_goal/goal', Pose, queue_size=1)
 
+        print("--- subscriber ---")
+        # --- Subscribers ---
         self.sub_goal_reached = rospy.Subscriber('/move_to_goal/reached', Bool, self._goal_reached_callback)
         
         self._setup()
 
+        print("--- start server ---")
+        # --- Server ---
         self._action_name = name
-        self._as = actionlib.SimpleActionServer(self._action_name, FullPath, execute_cb=self.execute_callback, auto_start = False)
-        print "--- server ready ---" 
+        self._as = actionlib.SimpleActionServer(self._action_name, PathDriveAction, execute_cb=self.execute_callback, auto_start = False) 
         self._as.start()
+        print "--- server ready ---"
 
     def _setup(self):
         map = rospy.wait_for_message('/map', OccupancyGrid)
         self.map_info = map.info
 
-    def execute_callback(self, waypoints):
+    def execute_callback(self, data):
         success = True
         rate = rospy.Rate(1)
-        self.waypoints = waypoints
+        self.waypoints = data.waypoints.fullpath
+        print self.waypoints
         self.waypointsAvailable = True
 
         while not rospy.is_shutdown():
-            if self.is_navigating == False:
+            if self.is_navigating == False and self.waypoints != []:
                 self._navigate()
             if self.waypointsAvailable == False:
                 self.is_navigating = False
@@ -46,13 +54,14 @@ class PathDriveServer:
                 self._as.set_preempted()
                 success = False
                 break
-            
-            self.feedback.data = self.is_navigating
-            self._as.publish_feedback(self.feedback)
+
+            self.feedback.feedback.driving.data = self.is_navigating
+
+            self._as.publish_feedback(self.feedback.feedback)
             rate.sleep()
  
         if success:
-            self._as.set_succeeded(self.result)
+            self._as.set_succeeded(self.result.result)
 
     def _navigate(self):
         # get waypoint and start moving towards it
@@ -70,7 +79,7 @@ class PathDriveServer:
             self._move(x, y)
 
         else:
-            self.result.data = True
+            self.result.result.reached_last_goal.data = True
             self.waypointsAvailable = False
 
     def _move(self, x, y):
@@ -95,7 +104,7 @@ class PathDriveServer:
             self._navigate()
         else:
             self.waypoints = []
-            self.result.data = False
+            self.result.result.reached_last_goal.data = False
             self.waypointsAvailable = False
 
 
