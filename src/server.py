@@ -41,21 +41,18 @@ class PathDriveServer:
         rate = rospy.Rate(1)
         self.waypoints = data.waypoints.fullpath
 
-        print self.waypoints
         self.waypointsAvailable = True
 
         while not rospy.is_shutdown():
             if self.is_navigating == False:
                 self._navigate()
             if self.waypointsAvailable == False:
-                self.is_navigating = False
                 success = True
                 break
             if self._as.is_preempt_requested():
                 self._as.set_preempted()
                 success = False
                 break
-
             self.feedback.feedback.driving.data = self.is_navigating
 
             self._as.publish_feedback(self.feedback.feedback)
@@ -81,6 +78,7 @@ class PathDriveServer:
 
         else:
             self.result.result.reached_last_goal.data = True
+            self.is_navigating = False
             self.waypointsAvailable = False
 
     def _move(self, x, y):
@@ -109,7 +107,7 @@ class PathDriveServer:
             print "nope"
             self.waypoints = []
             self.result.result.reached_last_goal.data = False
-            self.waypointsAvailable = False
+            self.is_navigating = False
 
 
 if __name__ == '__main__':
