@@ -56,6 +56,7 @@ class PathDriveServer:
                 success = True
                 break
             if self._as.is_preempt_requested():
+                print("Cancel all goals")
                 self._as.set_preempted()
                 self.waypoints = []
                 self.is_navigating = False
@@ -80,7 +81,7 @@ class PathDriveServer:
             x = point.path_x
             y = point.path_y
 
-            print(self.waypoints)
+            #print(self.waypoints)
 
             # -- move to goal --
             self._move(x, y)
