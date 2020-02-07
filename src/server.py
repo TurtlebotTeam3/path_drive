@@ -17,11 +17,11 @@ class PathDriveServer:
 
         print("--- publisher ---")
         # --- Publishers ---
-        self.pub_goal = rospy.Publisher('/move_to_goal/goal', Pose, queue_size=1)
+        self.pub_goal = rospy.Publisher('move_to_goal/goal', Pose, queue_size=1)
 
         print("--- subscriber ---")
         # --- Subscribers ---
-        self.sub_goal_reached = rospy.Subscriber('/move_to_goal/reached', Bool, self._goal_reached_callback)
+        self.sub_goal_reached = rospy.Subscriber('move_to_goal/reached', Bool, self._goal_reached_callback)
         
         self._setup()
 
@@ -33,7 +33,7 @@ class PathDriveServer:
         print "--- server ready ---"
 
     def _setup(self):
-        map = rospy.wait_for_message('/map', OccupancyGrid)
+        map = rospy.wait_for_message('map', OccupancyGrid)
         self.map_info = map.info
 
     def execute_callback(self, data):
