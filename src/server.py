@@ -5,11 +5,13 @@ from std_msgs.msg import Bool
 from geometry_msgs.msg import Pose
 from path_drive.msg import PathPoint, FullPath, PathDriveAction, PathDriveActionFeedback, PathDriveActionResult
 from nav_msgs.msg import OccupancyGrid
+from visualization_msgs.msg import Marker, MarkerArray
 
 
 class PathDriveServer:
 
     def __init__(self, name):
+        self.marker_array = None
         self.is_navigating = False
         self.waypoints = []
         self.feedback = PathDriveActionFeedback()
@@ -18,6 +20,7 @@ class PathDriveServer:
         print("--- publisher ---")
         # --- Publishers ---
         self.pub_goal = rospy.Publisher('/move_to_goal/goal', Pose, queue_size=1)
+        self.marker_waypoint_publisher = rospy.Publisher('waypoint_marker_array', MarkerArray, queue_size=1)
 
         print("--- subscriber ---")
         # --- Subscribers ---
@@ -40,6 +43,7 @@ class PathDriveServer:
         success = True
         #ate = rospy.Rate(1)
         self.waypoints = data.waypoints.fullpath
+        self._publish_list(self.waypoints)
 
         self.waypointsAvailable = True
 
@@ -108,6 +112,55 @@ class PathDriveServer:
             self.waypoints = []
             self.result.result.reached_last_goal.data = False
             self.is_navigating = False
+
+    def _publish_list(self, list):
+        markerArray = self._create_marker_array(list, 0.075,0.35, 0.35, 0.85)
+                
+        if self.marker_array != None:
+            for oldmarker in self.marker_array.markers:
+                oldmarker.action = Marker.DELETE
+            self.marker_waypoint_publisher.publish(self.marker_array)
+            rospy.sleep(0.01)
+
+        self.marker_array = markerArray
+        self.marker_waypoint_publisher.publish(self.marker_array)
+        rospy.sleep(0.01)
+
+    def _create_marker_array(self, list, size, red, green, blue):
+        markerArray = MarkerArray()
+        for point in list:
+            try:
+                x = point.path_x
+                y = point.path_y
+            except:
+                try:
+                    y, x = point
+                except:
+                    print("An exception occurred")
+            marker = Marker()
+            marker.header.frame_id = "/map"
+            marker.type = Marker.SPHERE
+            marker.action = Marker.ADD
+            marker.scale.x = size
+            marker.scale.y = size
+            marker.scale.z = size
+            marker.color.r = red
+            marker.color.g = green
+            marker.color.b = blue
+            marker.color.a = 1.0
+            marker.pose.orientation.w = 1.0
+            marker.pose.position.x = (x * self.map_info.resolution) + self.map_info.origin.position.x
+            marker.pose.position.y = (y * self.map_info.resolution) + self.map_info.origin.position.y 
+            marker.pose.position.z = 1
+
+            markerArray.markers.append(marker)
+
+        id = 0
+        for m in markerArray.markers:
+            m.id = id
+            id += 1
+
+        return markerArray
 
 
 if __name__ == '__main__':
