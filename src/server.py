@@ -57,7 +57,10 @@ class PathDriveServer:
                 break
             if self._as.is_preempt_requested():
                 self._as.set_preempted()
-                success = False
+                self.waypoints = []
+                self.is_navigating = False
+                self.waypointsAvailable = False
+                success = True
                 break
             self.feedback.feedback.driving.data = self.is_navigating
 
