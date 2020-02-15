@@ -6,6 +6,7 @@ from geometry_msgs.msg import Pose
 from path_drive.msg import PathPoint, FullPath, PathDriveAction, PathDriveActionFeedback, PathDriveActionResult
 from nav_msgs.msg import OccupancyGrid
 from visualization_msgs.msg import Marker, MarkerArray
+from simple_odom.msg import CustomPose, PoseConverted
 
 
 class PathDriveServer:
@@ -61,8 +62,19 @@ class PathDriveServer:
                 self.waypoints = []
                 self.is_navigating = False
                 self.waypointsAvailable = False
+
+                # Set goal to current position to stop robot from moving further
+                # yes this is a hack and should be done with an action based move to goal
+                pose = rospy.wait_for_message('simple_odom_pose', CustomPose)
+                goal = Pose()
+                goal.position.x = pose.pose.position.x
+                goal.position.y = pose.pose.position.y
+                goal.orientation.w = 1
+                self.pub_goal.publish(goal)
+
                 success = True
                 break
+            
             self.feedback.feedback.driving.data = self.is_navigating
 
             self._as.publish_feedback(self.feedback.feedback)
@@ -93,7 +105,7 @@ class PathDriveServer:
 
     def _move(self, x, y):
         """
-        Moves the rob2t to a place defined by coordinates x and y.
+        Moves the robot to a place defined by coordinates x and y.
         """
         print('Navigate to: ' + str(x) + ' | ' + str(y))
         goal = Pose()
@@ -144,7 +156,7 @@ class PathDriveServer:
                 except:
                     print("An exception occurred")
             marker = Marker()
-            marker.header.frame_id = "/map"
+            marker.header.frame_id = "Turtle4711/map"
             marker.type = Marker.SPHERE
             marker.action = Marker.ADD
             marker.scale.x = size
