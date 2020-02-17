@@ -18,25 +18,25 @@ class PathDriveServer:
         self.feedback = PathDriveActionFeedback()
         self.result = PathDriveActionResult()
 
-        print("--- publisher ---")
+        rospy.loginfo("--- publisher ---")
         # --- Publishers ---
 
         self.pub_goal = rospy.Publisher('move_to_goal/goal', Pose, queue_size=1)
         self.marker_waypoint_publisher = rospy.Publisher('waypoint_marker_array', MarkerArray, queue_size=1)
 
 
-        print("--- subscriber ---")
+        rospy.loginfo("--- subscriber ---")
         # --- Subscribers ---
         self.sub_goal_reached = rospy.Subscriber('move_to_goal/reached', Bool, self._goal_reached_callback)
         
         self._setup()
 
-        print("--- start server ---")
+        rospy.loginfo("--- start server ---")
         # --- Server ---
         self._action_name = name
         self._as = actionlib.SimpleActionServer(self._action_name, PathDriveAction, execute_cb=self.execute_callback, auto_start = False) 
         self._as.start()
-        print "--- server ready ---"
+        rospy.loginfo("--- server ready ---")
 
     def _setup(self):
         map = rospy.wait_for_message('map', OccupancyGrid)
@@ -57,7 +57,7 @@ class PathDriveServer:
                 success = True
                 break
             if self._as.is_preempt_requested():
-                print("Cancel all goals")
+                rospy.loginfo("Cancel all goals")
                 self._as.set_preempted()
                 self.waypoints = []
                 self.is_navigating = False
@@ -107,7 +107,7 @@ class PathDriveServer:
         """
         Moves the robot to a place defined by coordinates x and y.
         """
-        print('Navigate to: ' + str(x) + ' | ' + str(y))
+        rospy.loginfo('Navigate to: ' + str(x) + ' | ' + str(y))
         goal = Pose()
 
         target_x = (x * self.map_info.resolution) + self.map_info.origin.position.x
@@ -121,12 +121,11 @@ class PathDriveServer:
     
     
     def _goal_reached_callback(self, reached):
-        print reached
         if reached.data == True:
-            print "reached"
+            rospy.loginfo("goal_reached_callback: reached")
             self._navigate()
         else:
-            print "nope"
+            rospy.loginfo("goal_reached_callback: nope")
             self.waypoints = []
             self.result.result.reached_last_goal.data = False
             self.is_navigating = False
@@ -154,7 +153,7 @@ class PathDriveServer:
                 try:
                     y, x = point
                 except:
-                    print("An exception occurred")
+                    rospy.loginfo("An exception occurred")
             marker = Marker()
             marker.header.frame_id = "Turtle4711/map"
             marker.type = Marker.SPHERE

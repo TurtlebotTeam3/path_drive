@@ -1,0 +1,4 @@
+<launch>
+    <node pkg="path_drive" type="server.py" name="path_drive_server" output="screen">
+    </node>
+</launch>
