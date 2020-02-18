@@ -48,20 +48,16 @@ class PathDriveServer:
         self.waypoints = data.waypoints.fullpath
         self._publish_list(self.waypoints)
 
-        self.waypointsAvailable = True
+        # Start navigating
+        self.is_navigating = True
+        self._navigate()
 
-        while not rospy.is_shutdown():
-            if self.is_navigating == False:
-                self._navigate()
-            if self.waypointsAvailable == False:
-                success = True
-                break
+        while not rospy.is_shutdown() and self.is_navigating:
             if self._as.is_preempt_requested():
                 rospy.loginfo("Cancel all goals")
                 self._as.set_preempted()
                 self.waypoints = []
                 self.is_navigating = False
-                self.waypointsAvailable = False
 
                 # Set goal to current position to stop robot from moving further
                 # yes this is a hack and should be done with an action based move to goal
@@ -71,23 +67,18 @@ class PathDriveServer:
                 goal.position.y = pose.pose.position.y
                 goal.orientation.w = 1
                 self.pub_goal.publish(goal)
-
-                success = True
                 break
             
             self.feedback.feedback.driving.data = self.is_navigating
 
             self._as.publish_feedback(self.feedback.feedback)
-            #rate.sleep()
  
-        if success:
-            self._as.set_succeeded(self.result.result)
+        self._as.set_succeeded(self.result.result)
 
     def _navigate(self):
         # get waypoint and start moving towards it
         # when success the process next
-        self.is_navigating = True
-
+        
         if(len(self.waypoints) > 0):
             point = self.waypoints.pop(0)
             x = point.path_x
@@ -101,7 +92,6 @@ class PathDriveServer:
         else:
             self.result.result.reached_last_goal.data = True
             self.is_navigating = False
-            self.waypointsAvailable = False
 
     def _move(self, x, y):
         """
