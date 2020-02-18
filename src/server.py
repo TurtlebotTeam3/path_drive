@@ -33,7 +33,7 @@ class PathDriveServer:
 
         rospy.loginfo("--- start server ---")
         # --- Server ---
-        self._action_name = name
+        self._action_name = "path_drive_server"
         self._as = actionlib.SimpleActionServer(self._action_name, PathDriveAction, execute_cb=self.execute_callback, auto_start = False) 
         self._as.start()
         rospy.loginfo("--- server ready ---")
