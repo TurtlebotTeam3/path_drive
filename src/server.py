@@ -39,10 +39,16 @@ class PathDriveServer:
         rospy.loginfo("--- server ready ---")
 
     def _setup(self):
+        """
+        Get map meta information
+        """
         map = rospy.wait_for_message('map', OccupancyGrid)
         self.map_info = map.info
 
     def execute_callback(self, data):
+        """
+        Main method of the acion server.
+        """
         success = True
         #ate = rospy.Rate(1)
         self.waypoints = data.waypoints.fullpath
@@ -76,15 +82,14 @@ class PathDriveServer:
         self._as.set_succeeded(self.result.result)
 
     def _navigate(self):
-        # get waypoint and start moving towards it
-        # when success the process next
+        """
+        Get next waypoint from the list and send it to move to goal.
+        """
         
         if(len(self.waypoints) > 0):
             point = self.waypoints.pop(0)
             x = point.path_x
             y = point.path_y
-
-            #print(self.waypoints)
 
             # -- move to goal --
             self._move(x, y)
@@ -111,16 +116,24 @@ class PathDriveServer:
     
     
     def _goal_reached_callback(self, reached):
+        """
+        Process information on the topic move_to_goal/reached. 
+        """
         if reached.data == True:
+            # Got to the next waypoint
             rospy.loginfo("goal_reached_callback: reached")
             self._navigate()
         else:
+            # Cancel waypoint processing
             rospy.loginfo("goal_reached_callback: nope")
             self.waypoints = []
             self.result.result.reached_last_goal.data = False
             self.is_navigating = False
 
     def _publish_list(self, list):
+        """
+        Publish waypoint list to visualize it in RViz
+        """
         markerArray = self._create_marker_array(list, 0.075,0.35, 0.35, 0.85)
                 
         if self.marker_array != None:
@@ -134,6 +147,9 @@ class PathDriveServer:
         rospy.sleep(0.01)
 
     def _create_marker_array(self, list, size, red, green, blue):
+        """
+        Convert the waypoints in the list so it can be visualized with RViz
+        """
         markerArray = MarkerArray()
         for point in list:
             try:
